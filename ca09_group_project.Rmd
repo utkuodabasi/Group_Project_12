@@ -231,11 +231,12 @@ Fit a regression model called `model1` with the following explanatory variables:
 ```{r}
 model1 <- lm(log(price_4_nights)~prop_type_simplified + number_of_reviews+review_scores_rating,data = listings)
 
-model1 %>% 
-  broom::tidy()
-
-
+msummary(model1)
 ``` 
+"review_scores_rating" is not a significant indicator of log(price_4_nights) since its P values is 0.27 which is way higher than the 0.05 threshold. 
+
+Since "prop_type_simplified" variable is categorical we need to interpret every 
+
 
 We want to determine if `room_type` is a significant predictor of the cost for 4 nights, given everything else in the model. Fit a regression model called model2 that includes all of the explananatory variables in `model1` plus `room_type`. 
 
