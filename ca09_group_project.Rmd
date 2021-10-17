@@ -198,12 +198,44 @@ For the target variable $Y$, we will use the cost for two people to stay at an A
 
 Create a new variable called `price_4_nights` that uses `price`, and `accomodates` to calculate the total cost for two people to stay at the Airbnb property for 4 nights. This is the variable $Y$ we want to explain.
 
+```{r}
+listings <- listings %>% 
+  mutate(price_4_nights = (price/accommodates)*2*4)
+
+
+``` 
+
+
 Use histograms or density plots to examine the distributions of `price_4_nights` and `log(price_4_nights)`. Which variable should you use for the regression model? Why?
 
-Fit a regression model called `model1` with the following explanatory variables: `prop_type_simplified`, `number_of_reviews`, and `review_scores_rating`. 
+```{r}
+listings  %>% 
+  ggplot()+
+  geom_density(aes(x=price_4_nights))
+
+listings %>% 
+  ggplot()+
+  geom_density(aes(x=log(price_4_nights)))
+
+
+``` 
+ 
+Linear regression assumes normal distributions for variables used. Since Log(price_4_nights) fits the normal distribution much better, it should be used instead of price_4_nights variable. 
+
+
+Fit a regression model called `model1` with the following explanatory variables: `prop_type_simplified`, `number_of_reviews`, and `review_scores_rating`.
 
 - Interpret the coefficient `review_scores_rating` in terms of `price_4_nights`.
 - Interpret the coefficient of `prop_type_simplified` in terms of `price_4_nights`.
+
+```{r}
+model1 <- lm(log(price_4_nights)~prop_type_simplified + number_of_reviews+review_scores_rating,data = listings)
+
+model1 %>% 
+  broom::tidy()
+
+
+``` 
 
 We want to determine if `room_type` is a significant predictor of the cost for 4 nights, given everything else in the model. Fit a regression model called model2 that includes all of the explananatory variables in `model1` plus `room_type`. 
 
