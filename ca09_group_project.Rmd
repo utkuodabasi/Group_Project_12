@@ -388,8 +388,7 @@ Collinearity is checked at every stage of explanatory variable addition and no s
 1. Create a summary table, using `huxtable` (https://mfa2022.netlify.app/example/modelling_side_by_side_tables/) that shows which models you worked on, which predictors are significant, the adjusted $R^2$, and the Residual Standard Error.
 
 ```{r}
-install.packages("palmerpenguins")
-library(palmerpenguins)
+
 install.packages("huxtable", dependencies = TRUE)
 library(huxtable)
 
