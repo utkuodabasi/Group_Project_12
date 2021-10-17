@@ -11,7 +11,7 @@ output:
     number_sections: yes
     code_folding: show
 ---
-•git add –A•git commit –m “a useful message”•git pull•git push
+
 
 ```{r setup, include=FALSE}
 # leave this chunk alone
@@ -59,7 +59,7 @@ All of the listings are a GZ file, namely they are archive files compressed by t
 
 # use cache=TRUE so you dont donwload the data everytime you knit
 
-listings <- vroom("http://data.insideairbnb.com/thailand/central-thailand/bangkok/2021-09-28/data/listings.csv.gz") %>% 
+listings <- vroom("http://data.insideairbnb.com/china/beijing/beijing/2021-09-28/data/listings.csv.gz") %>% 
        clean_names()
 
 ```
