@@ -139,14 +139,14 @@ Since the vast majority of the observations in the data are one of the top four 
 ```{r}
 listings <- listings %>%
   mutate(prop_type_simplified = case_when(
-    property_type %in% c("______","______", "______","______") ~ property_type, 
+    property_type %in% c("Entire villa","Entire residential home", "Farm stay","Private room in farm stay") ~ property_type, 
     TRUE ~ "Other"
   ))
   
 ```
 Use the code below to check that `prop_type_simplified` was correctly made.
 
-```
+```{r}
 listings %>%
   count(property_type, prop_type_simplified) %>%
   arrange(desc(n))        
@@ -159,6 +159,16 @@ Airbnb is most commonly used for travel purposes, i.e., as an alternative to tra
 - What is the likely intended purpose for Airbnb listings with this seemingly unusual value for `minimum_nights`?
 
 Filter the airbnb data so that it only includes observations with `minimum_nights <= 4`
+
+
+```{r}
+listings <- listings %>% 
+  filter(minimum_nights <= 4)
+```  
+
+
+
+
 
         
 # Mapping 
