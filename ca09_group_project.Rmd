@@ -398,7 +398,9 @@ huxreg(model1, model2, model_4,model_5,model_6,model_7,model_final)
 
 ```{r}
 
-predict(model_final, data.frame(c(0,0,1,0,18,1,0,4,1,1,1,0,0,8,0.1)))
+predict(model_final, data.frame(c("Other",18,"Private room",4,"t","t","延庆县 / Yanqing",8,0.1)))
+
+511$
 
 ``` 
 
