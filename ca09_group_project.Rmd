@@ -235,10 +235,24 @@ msummary(model1)
 ``` 
 "review_scores_rating" is not a significant indicator of log(price_4_nights) since its P values is 0.27 which is way higher than the 0.05 threshold. 
 
-Since "prop_type_simplified" variable is categorical we need to interpret every 
+Since "prop_type_simplified" variable is categorical we need to interpret every type of properties:
+
+- the coefficient of "Other" is not significant (tvalue < 2)
+- the "Entire Residential Home" is the base category and it has significant an intercept of 7.7 which implies that this type of property drives the price of the accommodation positively by USD 7.7.
+- the property type "Entire Villa" has a significant intercept of 0.14. By adding the intercept of the base category we obtain an intercept of 7.83 which implies that this type of properties drives the price of the accommodation by a relative move of USD 7.83.
+- the property type "Farm stay" has a absolute significant intercept of 7.392 which implies that this type of properties drives the price of the accommodation by a relative move of USD 7.39.
+- the property type "Private room in a farm stay" has an absolute significant intercept of 6.834 which implies that this type of property drives the price by a relative move of USD 6.834
+
 
 
 We want to determine if `room_type` is a significant predictor of the cost for 4 nights, given everything else in the model. Fit a regression model called model2 that includes all of the explananatory variables in `model1` plus `room_type`. 
+
+```{r}
+model2 <- lm(log(price_4_nights)~prop_type_simplified + number_of_reviews+review_scores_rating+ room_type,data = listings)
+
+msummary(model2)
+``` 
+In the model2, we can observe that room_type is important for both "private room" and "shared room" categories since both of their p value is lower than 0.05.
 
 
 
@@ -247,22 +261,140 @@ We want to determine if `room_type` is a significant predictor of the cost for 4
 Our dataset has many more variables, so here are some ideas on how you can extend your analysis
 
 1. Are the number of `bathrooms`, `bedrooms`, `beds`, or size of the house (`accomodates`) significant predictors of `price_4_nights`? Or might these be co-linear variables?
+
+```{r}
+model_3 <- lm(log(price_4_nights)~bedrooms+beds+accommodates,data = listings)
+
+msummary(model_3)
+
+model_3 %>% 
+  car::vif(model_3)
+
+``` 
+In Beijing data set "bathrooms" variable is empty. Therefore, the analysis is done with "bedrooms", "beds" and "accommodates" variables. All these variables are found significant.
+
+When we investigate VIFs, we see that none of them is higher than 5. Although, "bedrooms" variable is close to 5 with a VIF value of 4.7. So these could potentially be co-linear variables. 
+
+
 1. Do superhosts `(host_is_superhost`) command a pricing premium, after controlling for other variables?
+
+```{r}
+model_4 <- lm(log(price_4_nights)~prop_type_simplified + number_of_reviews+review_scores_rating+ room_type+accommodates+host_is_superhost,data = listings)
+
+msummary(model_4)
+``` 
+Yes, actually it is safe to say super hosts command a price premium since it is a significant variable in the model and its beta is positive.
+
+
 1. Some hosts allow you to immediately book their listing (`instant_bookable == TRUE`), while a non-trivial proportion don't. After controlling for other variables, is `instant_bookable` a significant predictor of `price_4_nights`?
+
+```{r}
+model_5 <- lm(log(price_4_nights)~prop_type_simplified + number_of_reviews+review_scores_rating+ room_type+accommodates+host_is_superhost+instant_bookable,data = listings)
+
+msummary(model_5)
+
+model_5 %>% 
+  car::vif(model_5)
+
+``` 
+
 1. For all cities, there are 3 variables that relate to neighbourhoods: `neighbourhood`, `neighbourhood_cleansed`, and `neighbourhood_group_cleansed`. There are typically more than 20 neighbourhoods in each city, and it wouldn't make sense to include them all in your model. Use your city knowledge, or ask someone with city knowledge, and see whether you can group neighbourhoods together so the majority of listings falls in fewer (5-6 max) geographical areas. You would thus need to create a new categorical variabale `neighbourhood_simplified` and determine whether location is a predictor of `price_4_nights`
+
+```{r}
+listings <- listings %>%
+  mutate(neighbourhood_simplified = case_when(
+    neighbourhood_cleansed %in% c("怀柔区 / Huairou","延庆县 / Yanqing", "密云县 / Miyun") ~ neighbourhood_cleansed, 
+    TRUE ~ "Other"
+  ))
+
+
+listings %>%
+  count(neighbourhood_cleansed, neighbourhood_simplified) %>%
+  arrange(desc(n))        
+
+
+model_6 <- lm(log(price_4_nights)~prop_type_simplified + number_of_reviews+review_scores_rating+ room_type+accommodates+host_is_superhost+instant_bookable+neighbourhood_simplified,data = listings)
+
+msummary(model_6)
+
+model_6 %>% 
+  car::vif(model_6)
+
+  
+```
+Since there wasn't a clear way to group neighborhoods qualitatively, we grouped the neighborhood_cleansed data according to the number of hosts in each neighborhood and listed the remaining as others. 
+
+Only Huairou district is significant and it demands a premium on price. This makes sense since Huairou is a high quality district and quite popular on social media. 
+
+
 1. What is the effect of `avalability_30` or `reviews_per_month` on `price_4_nights`, after we control for other variables?
+
+```{r}
+model_7 <- lm(log(price_4_nights)~prop_type_simplified + number_of_reviews+review_scores_rating+ room_type+accommodates+host_is_superhost+instant_bookable+neighbourhood_simplified+availability_30+reviews_per_month,data = listings)
+
+msummary(model_7)
+
+model_7 %>% 
+  car::vif(model_7)
+
+``` 
+
 
 
 ## Diagnostics, collinearity, summary tables
 
 As you keep building your models, it makes sense to:
 
+```{r}
+model_final <- lm(log(price_4_nights)~prop_type_simplified + number_of_reviews+ room_type+accommodates+host_is_superhost+instant_bookable+neighbourhood_simplified+availability_30+reviews_per_month,data = listings)
+#For the final model review_scores_rating is dropped since it was not a significant variables. 
+
+msummary(model_final)
+
+model_final %>% 
+  car::vif(model_final)
+
+``` 
 1. Check the residuals, using `autoplot(model_x)`
+
+```{r}
+model_final <- lm(log(price_4_nights)~prop_type_simplified + number_of_reviews+ room_type+accommodates+host_is_superhost+instant_bookable+neighbourhood_simplified+availability_30+reviews_per_month,data = listings)
+#For the final model review_scores_rating is dropped since it was not a significant variables. 
+
+msummary(model_final)
+
+model_final %>% 
+  car::vif(model_final)
+
+autoplot(model_final)
+``` 
+
+Comment
+
+
+
+
 1. As you start building models with more explanatory variables, make sure you use `car::vif(model_x)`` to calculate the **Variance Inflation Factor (VIF)** for your predictors and determine whether you have colinear variables. A general guideline is that a VIF larger than 5 or 10 is large, and your model may suffer from collinearity. Remove the variable in question and run your model again without it.
 
+```{r}
+model_final %>% 
+  car::vif(model_final) 
+
+``` 
+
+Collinearity is checked at every stage of explanatory variable addition and no significant collinearity problem exists in the data set since all VIF values are significantly below 5. 
 
 
 1. Create a summary table, using `huxtable` (https://mfa2022.netlify.app/example/modelling_side_by_side_tables/) that shows which models you worked on, which predictors are significant, the adjusted $R^2$, and the Residual Standard Error.
+
+```{r}
+install.packages("palmerpenguins")
+library(palmerpenguins)
+install.packages("huxtable", dependencies = TRUE)
+library(huxtable)
+
+``` 
+
 1. Finally, you must use the best model you came up with for prediction. Suppose you are planning to visit the city you have been assigned to over reading week, and you want to stay in an Airbnb. Find Airbnb's in your destination city that are apartments with a private room, have at least 10 reviews, and an average rating of at least 90. Use your best model to predict the total cost to stay at this Airbnb for 4 nights. Include the appropriate 95% interval with your prediction. Report the point prediction and interval in terms of `price_4_nights`. 
   - if you used a log(price_4_nights) model, make sure you anti-log to convert the value in $. You can read more about [hot to interpret a regression model when some variables are log transformed here](https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faqhow-do-i-interpret-a-regression-model-when-some-variables-are-log-transformed/)
 
