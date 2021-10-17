@@ -11,7 +11,7 @@ output:
     number_sections: yes
     code_folding: show
 ---
-#change
+•git add –A•git commit –m “a useful message”•git pull•git push
 
 ```{r setup, include=FALSE}
 # leave this chunk alone
@@ -121,7 +121,7 @@ Notice that some of the price data (`price`) is given as a character string, e.g
 
 Since `price` is a quantitative variable, we need to make sure it is stored as numeric data `num` in the dataframe. To do so, we will first use `readr::parse_number()` which drops any non-numeric characters before or after the first number
 
-```
+```{r}
 listings <- listings %>% 
   mutate(price = parse_number(price))
 ```
@@ -136,7 +136,7 @@ Next, we look at the variable `property_type`. We can use the `count` function t
 
 Since the vast majority of the observations in the data are one of the top four or five property types, we would like to create a simplified version of `property_type` variable that has 5 categories: the top four categories and `Other`. Fill in the code below to create `prop_type_simplified`.
 
-```
+```{r}
 listings <- listings %>%
   mutate(prop_type_simplified = case_when(
     property_type %in% c("______","______", "______","______") ~ property_type, 
@@ -227,7 +227,7 @@ As you keep building your models, it makes sense to:
 # Deliverables
 
 
-- By midnight on Monday 17 Oct 2022, you must upload on Canvas a short presentation (max 4-5 slides) with your findings, as some groups will be asked to present in class. You should present your Exploratory Data Analysis, as well as your best model. In addition, you must upload on Canvas your final report, written  using R Markdown to introduce, frame, and describe your story and findings. You should include the following in the memo:
+- By midnight on Monday 17 Oct 2021, you must upload on Canvas a short presentation (max 4-5 slides) with your findings, as some groups will be asked to present in class. You should present your Exploratory Data Analysis, as well as your best model. In addition, you must upload on Canvas your final report, written  using R Markdown to introduce, frame, and describe your story and findings. You should include the following in the memo:
 
 1. Executive Summary: Based on your best model, indicate the factors that influence `price_4_nights`.
 This should be written for an intelligent but non-technical audience. All
