@@ -200,7 +200,9 @@ Create a new variable called `price_4_nights` that uses `price`, and `accomodate
 
 ```{r}
 listings <- listings %>% 
-  mutate(price_4_nights = (price/accommodates)*2*4)
+  mutate(price_4_nights = (price/accommodates)*2*4) 
+
+#First calculate the unit price then 4 nights then 2 people 
 
 
 ``` 
@@ -273,7 +275,7 @@ model_3 %>%
 ``` 
 In Beijing data set "bathrooms" variable is empty. Therefore, the analysis is done with "bedrooms", "beds" and "accommodates" variables. All these variables are found significant.
 
-When we investigate VIFs, we see that none of them is higher than 5. Although, "bedrooms" variable is close to 5 with a VIF value of 4.7. So these could potentially be co-linear variables. 
+When we investigate VIFs, we see that none of them is higher than 5. Although, "bedrooms" variable is close to 5 with a VIF value of 4.7. So these could potentially be co-linear variables. Therefore, we will add beds and accommodates but not the bedrooms. These variables will be added at the very end to not affect the collinearity in other models. 
 
 
 1. Do superhosts `(host_is_superhost`) command a pricing premium, after controlling for other variables?
@@ -346,8 +348,9 @@ model_7 %>%
 As you keep building your models, it makes sense to:
 
 ```{r}
-model_final <- lm(log(price_4_nights)~prop_type_simplified + number_of_reviews+ room_type+accommodates+host_is_superhost+instant_bookable+neighbourhood_simplified+availability_30+reviews_per_month,data = listings)
-#For the final model review_scores_rating is dropped since it was not a significant variables. 
+model_final <- lm(log(price_4_nights)~prop_type_simplified + number_of_reviews+ room_type+accommodates+host_is_superhost+instant_bookable+neighbourhood_simplified+availability_30+reviews_per_month+beds,data = listings)
+#For the final model review_scores_rating is dropped since it was not a significant variables.
+#Beds is added to the model and it doesn't create a significant collinearity problem
 
 msummary(model_final)
 
@@ -358,10 +361,7 @@ model_final %>%
 1. Check the residuals, using `autoplot(model_x)`
 
 ```{r}
-model_final <- lm(log(price_4_nights)~prop_type_simplified + number_of_reviews+ room_type+accommodates+host_is_superhost+instant_bookable+neighbourhood_simplified+availability_30+reviews_per_month,data = listings)
-#For the final model review_scores_rating is dropped since it was not a significant variables. 
 
-msummary(model_final)
 
 model_final %>% 
   car::vif(model_final)
@@ -398,9 +398,18 @@ huxreg(model1, model2, model_4,model_5,model_6,model_7,model_final)
 
 ```{r}
 
-predict(model_final, data.frame(c("Other",18,"Private room",4,"t","t","延庆县 / Yanqing",8,0.1)))
+filtered_listings <- listings %>% 
+  filter(room_type=="Private room") %>% 
+  filter(number_of_reviews>= 10) %>% 
+  filter(review_scores_rating >= 4.5)  #the data set is filtered. Filtered dataframe has 161 obs.
+  
+  
+predicted <- data.frame(exp(predict(model_final,filtered_listings,interval = "prediction" ))) #cost and intervals are predicted
 
-511$
+predicted %>% 
+  summarise(avg_price_4_nights = mean(fit),upper=mean(upr),lower=mean(lwr)) #average 
+
+
 
 ``` 
 
