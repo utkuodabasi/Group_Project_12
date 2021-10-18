@@ -259,12 +259,13 @@ Use histograms or density plots to examine the distributions of `price_4_nights`
 ```{r}
 listings  %>% 
   ggplot()+
-  geom_density(aes(x=price_4_nights))
+  geom_density(aes(x=price_4_nights)) 
 
 listings %>% 
   ggplot()+
   geom_density(aes(x=log(price_4_nights)))
 
+#Density distribution of raw price_4_nights and log(price_4_nights)
 
 ``` 
  
@@ -349,11 +350,14 @@ model_5 %>%
 1. For all cities, there are 3 variables that relate to neighbourhoods: `neighbourhood`, `neighbourhood_cleansed`, and `neighbourhood_group_cleansed`. There are typically more than 20 neighbourhoods in each city, and it wouldn't make sense to include them all in your model. Use your city knowledge, or ask someone with city knowledge, and see whether you can group neighbourhoods together so the majority of listings falls in fewer (5-6 max) geographical areas. You would thus need to create a new categorical variabale `neighbourhood_simplified` and determine whether location is a predictor of `price_4_nights`
 
 ```{r}
+
+
 listings <- listings %>%
   mutate(neighbourhood_simplified = case_when(
     neighbourhood_cleansed %in% c("怀柔区 / Huairou","延庆县 / Yanqing", "密云县 / Miyun") ~ neighbourhood_cleansed, 
     TRUE ~ "Other"
   ))
+
 
 
 listings %>%
@@ -370,7 +374,7 @@ model_6 %>%
 
   
 ```
-Since there wasn't a clear way to group neighborhoods qualitatively, we grouped the neighborhood_cleansed data according to the number of hosts in each neighborhood and listed the remaining as others. 
+The districts are divided into four according to the knowledge of the group members.  These districts are Huairou, Yanqing, Miyun and others. 
 
 Only Huairou district is significant and it demands a premium on price. This makes sense since Huairou is a high quality district and quite popular on social media. 
 
@@ -415,7 +419,7 @@ model_final %>%
 autoplot(model_final)
 ``` 
 
-Comment
+The residual vs Fitted graph doesn't seem to follow a specific pattern. This means that linearity assumption of regression is checked. The normality graph, while not perfect, seems to fit the normality assumption. 
 
 
 
@@ -453,7 +457,30 @@ filtered_listings <- listings %>%
 predicted <- data.frame(exp(predict(model_final,filtered_listings,interval = "prediction" ))) #cost and intervals are predicted
 
 predicted %>% 
-  summarise(avg_price_4_nights = mean(fit),upper=mean(upr),lower=mean(lwr)) #average 
+  summarise(avg_price_4_nights = mean(fit),upper=mean(upr),lower=mean(lwr)) #average of fit, upr and lower
+
+predicted$ID <- seq.int(nrow(predicted))
+filtered_listings$ID <- seq.int((nrow(filtered_listings)))
+
+filtered_listings_ordered <- filtered_listings %>% 
+  left_join(predicted,by="ID") %>% 
+  arrange(desc(fit))
+
+filtered_listings_ordered$ID <- seq.int((nrow(filtered_listings_ordered)))
+
+
+#a line graph is created to obeserve how well the data is predicted. Prices above 10000 are filtered since two values were outliers 
+
+filtered_listings_ordered %>% 
+  filter(upr<10000) %>% 
+  ggplot(aes(x=ID))+
+  geom_line(aes(y=fit,col="Fitted Line"))+
+  geom_line(aes(y=price_4_nights,col="Actal Price"))+
+  geom_line(aes(y=upr))+
+  geom_line(aes(y=lwr))+
+  xlab("Observations")+
+  ylab("Price for 4 Nights")+
+  theme_minimal()
 
 
 
@@ -462,38 +489,3 @@ predicted %>%
   - if you used a log(price_4_nights) model, make sure you anti-log to convert the value in $. You can read more about [hot to interpret a regression model when some variables are log transformed here](https://stats.idre.ucla.edu/other/mult-pkg/faq/general/faqhow-do-i-interpret-a-regression-model-when-some-variables-are-log-transformed/)
 
 
-# Deliverables
-
-
-- By midnight on Monday 17 Oct 2021, you must upload on Canvas a short presentation (max 4-5 slides) with your findings, as some groups will be asked to present in class. You should present your Exploratory Data Analysis, as well as your best model. In addition, you must upload on Canvas your final report, written  using R Markdown to introduce, frame, and describe your story and findings. You should include the following in the memo:
-
-1. Executive Summary: Based on your best model, indicate the factors that influence `price_4_nights`.
-This should be written for an intelligent but non-technical audience. All
-other sections can include technical writing.
-2. Data Exploration and Feature Selection: Present key elements of the data, including tables and
-graphs that help the reader understand the important variables in the dataset. Describe how the
-data was cleaned and prepared, including feature selection, transformations, interactions, and
-other approaches you considered.
-3. Model Selection and Validation: Describe the model fitting and validation process used. State
-the model you selected and why they are preferable to other choices.
-4. Findings and Recommendations: Interpret the results of the selected model and discuss
-additional steps that might improve the analysis
-  
-  
-
-Remember to follow R Markdown etiquette rules and style; don't have the Rmd output extraneous messages or warnings, include summary tables in nice tables (use `kableExtra`), and remove any placeholder texts from past Rmd templates; in other words, (i.e. I don't want to see stuff I wrote in your final report.)
-  
-  
-# Rubric
-
-Your work will be assessed on a rubric which you can find here
-
-
-```{r rubric, echo=FALSE, out.width="100%"}
-knitr::include_graphics(here::here("images", "rubric.png"), error = FALSE)
-```
-
-
-# Acknowledgements
-
-- The data for this project is from [insideairbnb.com](insideairbnb.com)
