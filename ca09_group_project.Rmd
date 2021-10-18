@@ -113,24 +113,82 @@ At this stage, you may also find you want to use `filter`, `mutate`, `arrange`, 
 
 > In all cases, please think about the message your plot is conveying. Don’t just say "This is my X-axis, this is my Y-axis", but rather what’s the **so what** of the plot. Tell some sort of story and speculate about the differences in the patterns in no more than a paragraph.
 
+## Looking at the raw values
+
+```{r}
+listings %>%
+glimpse()
+```
+
+## Summary statistics
+
+```{r}
+listings %>%
+skim()
+```
+
 ## Data wrangling
 
-Once you load the data, it's always a good idea to use `glimpse` to see what kind of variables you have and what data type (`chr`, `num`, `logical`, `date`, etc) they are. 
-
-Notice that some of the price data (`price`) is given as a character string, e.g., "$176.00"
-
-Since `price` is a quantitative variable, we need to make sure it is stored as numeric data `num` in the dataframe. To do so, we will first use `readr::parse_number()` which drops any non-numeric characters before or after the first number
+Since `price` is a quantitative variable, we need to make sure it is stored as numeric data `num` in the dataframe.
 
 ```{r}
 listings <- listings %>% 
   mutate(price = parse_number(price))
 ```
-  
-Use `typeof(listing$price)` to confirm that `price` is now stored as a number.
 
+```{r}
+typeof(listings$price)
+```
+```{r}
+skim(listings)
+```
+
+## Data visualisations
+
+```{r}
+# Price (per bedroom) distribution by room type
+listings %>%
+  filter (!is.na(room_type)) %>%
+  mutate ( price_per_bedroom := price/bedrooms ) %>%
+  ggplot(aes(x=price_per_bedroom, colour = room_type, alpha=0.4)) +
+  geom_histogram() +
+  facet_wrap(~room_type, scales = "free")
+  theme_bw() +
+  labs (title = "Price Distribution by Room Type")
+```
+
+```{r}
+# Box plot of price per bedroom by neighbourhoods
+listings %>%
+  filter (!is.na(neighbourhood_cleansed)) %>%
+  mutate ( price_per_bedroom := price/bedrooms ) %>%
+ggplot(aes( x = factor(neighbourhood_cleansed))) +
+  geom_boxplot(aes(y = price_per_bedroom)) +
+  theme( axis.text.x = element_text( angle= 45, hjust = 1)) +  
+  scale_y_continuous(limits = c(0,2500)) +
+  labs(title = "Box Plot of Price per Bedroom by Neighbourhoods")
+```
+
+```{r}
+# Correlation matrix of key variables
+listings <- listings %>% 
+  mutate(log_price := log(price)) # Mutate a new column showing log price
+ggpairs(listings, columns = c("log_price",  "accommodates",  "bedrooms", "availability_30", "availability_60", "review_scores_rating", "beds", "number_of_reviews", "minimum_nights"))
+```
+
+```{r}
+# Box plot of price per bedroom by whether the host is super host
+listings %>%
+  filter (!is.na(host_is_superhost)) %>%
+  mutate ( price_per_bedroom := price/bedrooms ) %>%
+ggplot(aes( x = factor(host_is_superhost))) +
+  geom_boxplot(aes(y = price_per_bedroom)) +
+  theme( axis.text.x = element_text( angle= 45, hjust = 1)) +  
+  scale_y_continuous(limits = c(0,2500)) +
+  labs(title = "Box Plot of Price per Bedroom by the host")
+```
 
 ## Propery types
-
 
 Next, we look at the variable `property_type`. We can use the `count` function to determine how many categories there are their frequency. What are the top 4 most common property types? What proportion of the total listings do they make up? 
 
@@ -142,8 +200,8 @@ listings <- listings %>%
     property_type %in% c("Entire villa","Entire residential home", "Farm stay","Private room in farm stay") ~ property_type, 
     TRUE ~ "Other"
   ))
-  
 ```
+
 Use the code below to check that `prop_type_simplified` was correctly made.
 
 ```{r}
@@ -154,32 +212,22 @@ listings %>%
 
 Airbnb is most commonly used for travel purposes, i.e., as an alternative to traditional hotels. We only want to include  listings in our regression analysis that are intended for travel purposes:
 
-- What are the  most common values for the variable `minimum_nights`? 
-- Is ther any value among the common values that stands out? 
-- What is the likely intended purpose for Airbnb listings with this seemingly unusual value for `minimum_nights`?
+```{r}
+listings %>%
+  count(minimum_nights)
+```
+The most common value for minimum_nights is 1.
 
-Filter the airbnb data so that it only includes observations with `minimum_nights <= 4`
-
+There are some unusual figures for minimum_nights such as, Airbnb does this to encourage customers to stay longer and spend more money.`
 
 ```{r}
 listings <- listings %>% 
   filter(minimum_nights <= 4)
 ```  
 
-
-
-
-
-        
-# Mapping 
-
-Visualisations of feature distributions and their relations are key to understanding a data set, and they can open up new lines of exploration. While we do not have time to go into all the wonderful geospatial visualisations one can do with R, you can use the following code to start with a map of your city, and overlay all AirBnB coordinates to get an overview of the spatial distribution of AirBnB rentals. For this visualisation we use the `leaflet` package, which includes a variety of tools for interactive maps, so you can easily zoom in-out, click on a point to get the actual AirBnB listing for that specific point, etc.
-
-The following code, having downloaded a dataframe `listings` with all AirbnB listings in Milan, will plot on the map all AirBnBs where `minimum_nights` is less than equal to four (4). You could learn more about `leaflet`, by following [the relevant Datacamp course on mapping with leaflet](https://www.datacamp.com/courses/interactive-maps-with-leaflet-in-r)
-
+# Mapping
 
 ```{r, out.width = '80%'}
-
 leaflet(data = filter(listings, minimum_nights <= 4)) %>% 
   addProviderTiles("OpenStreetMap.Mapnik") %>% 
   addCircleMarkers(lng = ~longitude, 
@@ -191,7 +239,6 @@ leaflet(data = filter(listings, minimum_nights <= 4)) %>%
                    label = ~property_type)
 ```
 
-    
 # Regression Analysis
 
 For the target variable $Y$, we will use the cost for two people to stay at an Airbnb location for four (4) nights. 
@@ -206,7 +253,6 @@ listings <- listings %>%
 
 
 ``` 
-
 
 Use histograms or density plots to examine the distributions of `price_4_nights` and `log(price_4_nights)`. Which variable should you use for the regression model? Why?
 
